@@ -44,7 +44,6 @@ This system transforms vague user queries into comprehensive research reports th
 Built a complete production-ready research system that showcases advanced agent patterns, multi-modal integrations, and sophisticated workflow orchestration.
 
 ## Required API Keys
-# Required
 OPENAI_API_KEY=your_openai_api_key_here
 TAVILY_API_KEY=your_tavily_api_key_here
 LANGSMITH_API_KEY=your_langsmith_api_key_here
