@@ -1,0 +1,10 @@
+/research_agent.ipynb
+/research_supervisor.ipynb
+/scoping.ipynb
+/utils.py
+/keys.py
+/dra_better
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
