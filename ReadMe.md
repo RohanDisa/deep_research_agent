@@ -17,7 +17,6 @@ This system transforms vague user queries into comprehensive research reports th
 - **State Management**: Complex state flows across subgraphs and nodes
 
 ### Advanced Integrations
-- **Model Context Protocol (MCP)**: Integration with MCP servers as research tools
 - **External APIs**: Tavily search integration with content summarization
 - **LangGraph Workflows**: End-to-end orchestration with conditional routing
 
