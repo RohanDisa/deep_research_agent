@@ -5,6 +5,8 @@ This module implements a research agent that can perform iterative web searches
 and synthesis to answer complex research questions.
 """
 
+import os
+
 from pydantic import BaseModel, Field
 from typing_extensions import Literal
 
@@ -12,9 +14,9 @@ from langgraph.graph import StateGraph, START, END
 from langchain_core.messages import SystemMessage, HumanMessage, ToolMessage, filter_messages
 from langchain.chat_models import init_chat_model
 
-from deep_research_from_scratch.state_research import ResearcherState, ResearcherOutputState
-from deep_research_from_scratch.utils import tavily_search, get_today_str, think_tool
-from deep_research_from_scratch.prompts import research_agent_prompt, compress_research_system_prompt, compress_research_human_message
+from state_research import ResearcherState, ResearcherOutputState
+from utils import tavily_search, get_today_str, think_tool
+from prompts import research_agent_prompt, compress_research_system_prompt, compress_research_human_message
 
 # ===== CONFIGURATION =====
 
@@ -23,10 +25,20 @@ tools = [tavily_search, think_tool]
 tools_by_name = {tool.name: tool for tool in tools}
 
 # Initialize models
-model = init_chat_model(model="openai:gpt-4.1-mini")
+model = init_chat_model(
+    model="openai:gpt-4.1-mini",
+    api_key=os.getenv("OPENAI_API_KEY"),
+)
 model_with_tools = model.bind_tools(tools)
-summarization_model = init_chat_model(model="openai:gpt-4.1-mini")
-compress_model = init_chat_model(model="openai:gpt-4.1", max_tokens=32000) # model="anthropic:claude-sonnet-4-20250514", max_tokens=64000
+summarization_model = init_chat_model(
+    model="openai:gpt-4.1-mini",
+    api_key=os.getenv("OPENAI_API_KEY"),
+)
+compress_model = init_chat_model(
+    model="openai:gpt-4.1",
+    api_key=os.getenv("OPENAI_API_KEY"),
+    max_tokens=32000,
+) # model="anthropic:claude-sonnet-4-20250514", max_tokens=64000
 
 # ===== AGENT NODES =====
 

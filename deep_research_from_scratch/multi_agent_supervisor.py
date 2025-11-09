@@ -11,6 +11,7 @@ maintaining isolated context windows for each research topic.
 """
 
 import asyncio
+import os
 
 from typing_extensions import Literal
 
@@ -25,14 +26,14 @@ from langchain_core.messages import (
 from langgraph.graph import StateGraph, START, END
 from langgraph.types import Command
 
-from deep_research_from_scratch.prompts import lead_researcher_prompt
-from deep_research_from_scratch.research_agent import researcher_agent
-from deep_research_from_scratch.state_multi_agent_supervisor import (
+from prompts import lead_researcher_prompt
+from research_agent import researcher_agent
+from state_multi_agent_supervisor import (
     SupervisorState, 
     ConductResearch, 
     ResearchComplete
 )
-from deep_research_from_scratch.utils import get_today_str, think_tool
+from utils import get_today_str, think_tool
 
 def get_notes_from_tool_calls(messages: list[BaseMessage]) -> list[str]:
     """Extract research notes from ToolMessage objects in supervisor message history.
@@ -68,7 +69,10 @@ except ImportError:
 # ===== CONFIGURATION =====
 
 supervisor_tools = [ConductResearch, ResearchComplete, think_tool]
-supervisor_model = init_chat_model(model="openai:gpt-4.1-mini")
+supervisor_model = init_chat_model(
+    model="openai:gpt-4.1-mini",
+    api_key=os.getenv("OPENAI_API_KEY"),
+)
 supervisor_model_with_tools = supervisor_model.bind_tools(supervisor_tools)
 
 # System constants
@@ -96,9 +100,13 @@ async def supervisor(state: SupervisorState) -> Command[Literal["supervisor_tool
     Returns:
         Command to proceed to supervisor_tools node with updated state
     """
+    research_iterations = state.get("research_iterations", 0)
+    print(f"[WORKFLOW] Entering supervisor node (iteration {research_iterations + 1})")
+    
     supervisor_messages = state.get("supervisor_messages", [])
 
     # Prepare system message with current date and constraints
+    print("[WORKFLOW] Preparing supervisor prompt...")
     system_message = lead_researcher_prompt.format(
         date=get_today_str(), 
         max_concurrent_research_units=max_concurrent_researchers,
@@ -107,7 +115,14 @@ async def supervisor(state: SupervisorState) -> Command[Literal["supervisor_tool
     messages = [SystemMessage(content=system_message)] + supervisor_messages
 
     # Make decision about next research steps
-    response = await supervisor_model_with_tools.ainvoke(messages)
+    print("[WORKFLOW] Invoking supervisor LLM to decide research actions...")
+    try:
+        response = await supervisor_model_with_tools.ainvoke(messages)
+        print(f"[WORKFLOW] Supervisor decision made (tool calls: {len(response.tool_calls) if hasattr(response, 'tool_calls') and response.tool_calls else 0})")
+    except Exception as e:
+        print(f"[WORKFLOW] ERROR in supervisor LLM call: {e}")
+        print(f"[WORKFLOW] Error type: {type(e).__name__}")
+        raise  # Re-raise to let the error propagate properly
 
     return Command(
         goto="supervisor_tools",
@@ -132,9 +147,13 @@ async def supervisor_tools(state: SupervisorState) -> Command[Literal["superviso
     Returns:
         Command to continue supervision, end process, or handle errors
     """
+    print("[WORKFLOW] Entering supervisor_tools node")
+    
     supervisor_messages = state.get("supervisor_messages", [])
     research_iterations = state.get("research_iterations", 0)
     most_recent_message = supervisor_messages[-1]
+    
+    print(f"[WORKFLOW] Processing supervisor decisions (iteration {research_iterations})...")
 
     # Initialize variables for single return pattern
     tool_messages = []
@@ -150,7 +169,10 @@ async def supervisor_tools(state: SupervisorState) -> Command[Literal["superviso
         for tool_call in most_recent_message.tool_calls
     )
 
+    print(f"[WORKFLOW] Exit check - Exceeded iterations: {exceeded_iterations}, No tool calls: {no_tool_calls}, Research complete: {research_complete}")
+
     if exceeded_iterations or no_tool_calls or research_complete:
+        print("[WORKFLOW] Research complete, routing to END")
         should_end = True
         next_step = END
 
@@ -181,6 +203,7 @@ async def supervisor_tools(state: SupervisorState) -> Command[Literal["superviso
 
             # Handle ConductResearch calls (asynchronous)
             if conduct_research_calls:
+                print(f"[WORKFLOW] Launching {len(conduct_research_calls)} parallel research agent(s)...")
                 # Launch parallel research agents
                 coros = [
                     researcher_agent.ainvoke({
@@ -193,7 +216,9 @@ async def supervisor_tools(state: SupervisorState) -> Command[Literal["superviso
                 ]
 
                 # Wait for all research to complete
+                print("[WORKFLOW] Waiting for research agents to complete...")
                 tool_results = await asyncio.gather(*coros)
+                print("[WORKFLOW] All research agents completed")
 
                 # Format research results as tool messages
                 # Each sub-agent returns compressed research findings in result["compressed_research"]

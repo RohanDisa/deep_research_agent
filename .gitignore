@@ -1,3 +1,4 @@
+*.ipynb
 /research_agent.ipynb
 /research_supervisor.ipynb
 /scoping.ipynb

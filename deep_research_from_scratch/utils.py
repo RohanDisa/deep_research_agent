@@ -18,8 +18,8 @@ from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import tool, InjectedToolArg
 from tavily import TavilyClient
 
-from deep_research_from_scratch.state_research import Summary
-from deep_research_from_scratch.prompts import summarize_webpage_prompt
+from state_research import Summary
+from prompts import summarize_webpage_prompt
 
 # ===== UTILITY FUNCTIONS =====
 
@@ -41,8 +41,11 @@ def get_current_dir() -> Path:
 
 # ===== CONFIGURATION =====
 
-summarization_model = init_chat_model(model="openai:gpt-4.1-mini")
-tavily_client = TavilyClient()
+summarization_model = init_chat_model(
+    model="openai:gpt-4.1-mini",
+    api_key=os.getenv("OPENAI_API_KEY"),
+)
+tavily_client = TavilyClient(api_key=os.getenv("TAVILY_API_KEY"))
 
 # ===== SEARCH FUNCTIONS =====
 

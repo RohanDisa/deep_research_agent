@@ -9,6 +9,7 @@ The workflow uses structured output to make deterministic decisions about
 whether sufficient context exists to proceed with research.
 """
 
+import os
 from datetime import datetime
 from typing_extensions import Literal
 
@@ -17,8 +18,8 @@ from langchain_core.messages import HumanMessage, AIMessage, get_buffer_string
 from langgraph.graph import StateGraph, START, END
 from langgraph.types import Command
 
-from deep_research_from_scratch.prompts import clarify_with_user_instructions, transform_messages_into_research_topic_prompt
-from deep_research_from_scratch.state_scope import AgentState, ClarifyWithUser, ResearchQuestion, AgentInputState
+from prompts import clarify_with_user_instructions, transform_messages_into_research_topic_prompt
+from state_scope import AgentState, ClarifyWithUser, ResearchQuestion, AgentInputState
 
 # ===== UTILITY FUNCTIONS =====
 
@@ -28,7 +29,11 @@ def get_today_str() -> str:
 # ===== CONFIGURATION =====
 
 # Initialize model
-model = init_chat_model(model="openai:gpt-4.1", temperature=0.0)
+model = init_chat_model(
+    model="openai:gpt-4.1",
+    api_key=os.getenv("OPENAI_API_KEY"),
+    temperature=0.0,
+)
 
 # ===== WORKFLOW NODES =====
 
@@ -39,10 +44,14 @@ def clarify_with_user(state: AgentState) -> Command[Literal["write_research_brie
     Uses structured output to make deterministic decisions and avoid hallucination.
     Routes to either research brief generation or ends with a clarification question.
     """
+    print("[WORKFLOW] Entering clarify_with_user node")
+    
     # Set up structured output model
+    print("[WORKFLOW] Setting up structured output model for clarification...")
     structured_output_model = model.with_structured_output(ClarifyWithUser)
 
     # Invoke the model with clarification instructions
+    print("[WORKFLOW] Invoking LLM to check if clarification is needed...")
     response = structured_output_model.invoke([
         HumanMessage(content=clarify_with_user_instructions.format(
             messages=get_buffer_string(messages=state["messages"]), 
@@ -52,11 +61,15 @@ def clarify_with_user(state: AgentState) -> Command[Literal["write_research_brie
 
     # Route based on clarification need
     if response.need_clarification:
+        print(f"[WORKFLOW] Clarification needed, routing to END")
+        print(f"[WORKFLOW] Question: {response.question[:100]}...")
         return Command(
             goto=END, 
             update={"messages": [AIMessage(content=response.question)]}
         )
     else:
+        print(f"[WORKFLOW] No clarification needed, routing to write_research_brief")
+        print(f"[WORKFLOW] Verification message: {response.verification[:100]}...")
         return Command(
             goto="write_research_brief", 
             update={"messages": [AIMessage(content=response.verification)]}
@@ -69,16 +82,21 @@ def write_research_brief(state: AgentState):
     Uses structured output to ensure the brief follows the required format
     and contains all necessary details for effective research.
     """
+    print("[WORKFLOW] Entering write_research_brief node")
+    
     # Set up structured output model
+    print("[WORKFLOW] Setting up structured output model for research brief...")
     structured_output_model = model.with_structured_output(ResearchQuestion)
 
     # Generate research brief from conversation history
+    print("[WORKFLOW] Generating research brief from conversation history...")
     response = structured_output_model.invoke([
         HumanMessage(content=transform_messages_into_research_topic_prompt.format(
             messages=get_buffer_string(state.get("messages", [])),
             date=get_today_str()
         ))
     ])
+    print("[WORKFLOW] Research brief generated successfully")
 
     # Update state with generated research brief and pass it to the supervisor
     return {

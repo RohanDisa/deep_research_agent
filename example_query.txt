@@ -1,0 +1,13 @@
+Compare Google ADK (Android Development Kit), LangChain, and Strands ADK in terms of:
+- Core functionality and purpose
+- Key features and capabilities
+- Use cases and applications
+- Architecture and design patterns
+- Integration capabilities
+- Performance characteristics
+- Strengths and limitations
+- Best use cases for each
+
+Provide a comprehensive comparison that helps understand when to use each tool and how they differ in their approaches and target use cases.
+
+

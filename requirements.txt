@@ -11,3 +11,5 @@ asyncio
 typing
 jupyter
 ipykernel
+streamlit
+rich

@@ -12,23 +12,29 @@ The system orchestrates the complete research workflow from initial user
 input through final report delivery.
 """
 
+import os
+
 from langchain_core.messages import HumanMessage
 from langgraph.graph import StateGraph, START, END
 
-from deep_research_from_scratch.utils import get_today_str
-from deep_research_from_scratch.prompts import final_report_generation_prompt
-from deep_research_from_scratch.state_scope import AgentState, AgentInputState
-from deep_research_from_scratch.research_agent_scope import clarify_with_user, write_research_brief
-from deep_research_from_scratch.multi_agent_supervisor import supervisor_agent
+# from utils import get_today_str
+from prompts import final_report_generation_prompt
+from state_scope import AgentState, AgentInputState
+from research_agent_scope import clarify_with_user, write_research_brief
+from multi_agent_supervisor import supervisor_agent
 
 # ===== Config =====
 
 from langchain.chat_models import init_chat_model
-writer_model = init_chat_model(model="openai:gpt-4.1", max_tokens=32000) # model="anthropic:claude-sonnet-4-20250514", max_tokens=64000
+writer_model = init_chat_model(
+    model="openai:gpt-4.1",
+    api_key=os.getenv("OPENAI_API_KEY"),
+    max_tokens=32000,
+) # model="anthropic:claude-sonnet-4-20250514", max_tokens=64000
 
 # ===== FINAL REPORT GENERATION =====
 
-from deep_research_from_scratch.state_scope import AgentState
+from state_scope import AgentState
 
 async def final_report_generation(state: AgentState):
     """
@@ -44,7 +50,7 @@ async def final_report_generation(state: AgentState):
     final_report_prompt = final_report_generation_prompt.format(
         research_brief=state.get("research_brief", ""),
         findings=findings,
-        date=get_today_str()
+        # date=get_today_str()
     )
 
     final_report = await writer_model.ainvoke([HumanMessage(content=final_report_prompt)])
