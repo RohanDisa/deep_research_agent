@@ -54,8 +54,6 @@ example_query.txt                # Sample deep-research prompt
 requirements.txt                 # Python dependencies
 ```
 
-The `dra_better/` directory contains a pre-built virtual environment and can be deleted or ignored if you prefer to manage your own environment.
-
 ---
 
 ## Prerequisites
@@ -76,8 +74,6 @@ pip install -U pip
 pip install -r requirements.txt
 ```
 
-> **Tip:** If you keep the `dra_better/` virtual environment, you can activate it directly with `.\dra_better\Scripts\activate`.
-
 ---
 
 ## Configuring Secrets
@@ -92,8 +88,6 @@ os.environ["OPENAI_API_KEY"] = "sk-...."
 os.environ["TAVILY_API_KEY"] = "tvly-...."
 os.environ["LANGSMITH_API_KEY"] = "lsv2_...."  # optional
 ```
-
-**Security note:** The repository currently includes placeholder values in `keys.py` and within several modules. Replace them with environment lookups (for example, `os.getenv("OPENAI_API_KEY")`) before deploying or sharing the project publicly.
 
 ---
 
@@ -124,17 +118,6 @@ Features:
 - Chat-style input with live clarification prompts.
 - Session persistence via LangGraph checkpoints.
 - Downloadable markdown report once research completes.
-
-### Interactive Notebooks
-
-- `full_agent.ipynb` – run the entire workflow end-to-end.
-- `research_agent.ipynb`, `research_supervisor.ipynb`, `scoping.ipynb` – experiment with individual components.
-
-Launch with:
-
-```bash
-jupyter notebook full_agent.ipynb
-```
 
 ---
 
