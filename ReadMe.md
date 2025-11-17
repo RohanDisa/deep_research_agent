@@ -131,6 +131,4 @@ Features:
 
 ---
 
-<video src="demo.mp4" controls width="720"></video>
-
-Happy researching! Let the supervisor coordinate the hard work while you review rich, fully cited reports.
+Happy researching! 
