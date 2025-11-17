@@ -10,7 +10,7 @@ Deep Research Agent is an end-to-end, production-style research assistant built 
 - **Supervisor + Specialists** – A LangGraph supervisor coordinates dedicated researcher agents that can run in parallel with independent context windows.
 - **Tool-Driven Evidence Gathering** – Research agents rely on Tavily web search, automatic summarisation, and reflective thinking loops (`think_tool`) to avoid hallucination.
 - **Deterministic Outputs** – Pydantic schemas enforce consistent state transitions; reports are generated from cleaned research notes and reference every source.
-- **Multiple Entry Points** – Run from the CLI, Streamlit UI, or Jupyter notebooks. Rich terminal output keeps the CLI readable.
+- **Multiple Entry Points** – Run from the CLI or Streamlit UI. Rich terminal output keeps the CLI readable.
 
 ---
 
